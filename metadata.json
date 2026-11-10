@@ -1,0 +1,6 @@
+{
+  "name": "Coupon Lo",
+  "description": "Meme coupon store to buy digital deals via UPI and track orders",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

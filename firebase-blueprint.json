@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "Coupon": {
+      "title": "Coupon",
+      "description": "Store coupon item available for purchase",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique coupon ID e.g. GGPRO" },
+        "name": { "type": "string", "description": "Display name e.g. GG PRO" },
+        "desc": { "type": "string", "description": "Description of the deal" },
+        "price": { "type": "number", "description": "MRP price in INR" },
+        "discount": { "type": "number", "description": "Discount percentage e.g. 15" },
+        "stock": { "type": "number", "description": "Available stock quantity" },
+        "emoji": { "type": "string", "description": "Coupon emoji icon" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Last updated timestamp" }
+      },
+      "required": ["id", "name", "desc", "price", "discount", "stock", "emoji"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase submission with payment proof",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique order ID e.g. CL-ABC123" },
+        "userId": { "type": "string", "description": "UID of the customer who submitted the order" },
+        "couponId": { "type": "string", "description": "ID of coupon purchased" },
+        "couponName": { "type": "string", "description": "Name of coupon purchased" },
+        "amount": { "type": "number", "description": "Final paid amount in INR" },
+        "utr": { "type": "string", "description": "Bank UTR transaction reference number" },
+        "customer": { "type": "string", "description": "Customer telegram handle or identifier" },
+        "screenshot": { "type": "string", "description": "Base64 or image URL payment screenshot" },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"], "description": "Order approval status" },
+        "key": { "type": "string", "description": "Redeemable coupon key assigned by admin" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Order creation timestamp" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Order update timestamp" }
+      },
+      "required": ["id", "userId", "couponId", "couponName", "amount", "utr", "status", "createdAt"]
+    },
+    "StoreNotification": {
+      "title": "StoreNotification",
+      "description": "Storewide notification broadcast",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique notification ID" },
+        "title": { "type": "string", "description": "Notification title" },
+        "body": { "type": "string", "description": "Notification message body" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Notification creation timestamp" }
+      },
+      "required": ["id", "title", "body", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/coupons/{couponId}": {
+      "schema": "Coupon",
+      "description": "Collection of store coupon deals"
+    },
+    "/orders/{orderId}": {
+      "schema": "Order",
+      "description": "Customer orders with payment proof and status"
+    },
+    "/notifications/{notificationId}": {
+      "schema": "StoreNotification",
+      "description": "Store broadcast notices"
+    }
+  }
+}

@@ -1,0 +1,100 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'sutharsita65@gmail.com' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidCoupon(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.desc is string && data.desc.size() <= 500 &&
+             (data.price is int || data.price is float) && data.price >= 0 &&
+             (data.discount is int || data.discount is float) && data.discount >= 0 && data.discount <= 100 &&
+             data.stock is int && data.stock >= 0 &&
+             data.emoji is string && data.emoji.size() <= 16;
+    }
+
+    function isValidOrder(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.couponId is string && data.couponId.size() <= 64 &&
+             data.couponName is string && data.couponName.size() <= 100 &&
+             (data.amount is int || data.amount is float) && data.amount >= 0 &&
+             data.utr is string && data.utr.size() >= 1 && data.utr.size() <= 64 &&
+             data.status in ['PENDING', 'APPROVED', 'REJECTED'] &&
+             (!('customer' in data) || data.customer == null || (data.customer is string && data.customer.size() <= 100)) &&
+             (!('screenshot' in data) || data.screenshot == null || (data.screenshot is string && data.screenshot.size() <= 2000000)) &&
+             (!('key' in data) || data.key == null || (data.key is string && data.key.size() <= 256)) &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidNotification(data) {
+      return data.id is string && data.id.size() <= 64 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.body is string && data.body.size() <= 2000 &&
+             data.createdAt is timestamp && data.createdAt <= request.time;
+    }
+
+    match /coupons/{couponId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(couponId) && isValidCoupon(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && isValidId(orderId) && (existing().userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      
+      allow create: if isSignedIn() && isValidId(orderId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().status == 'PENDING' &&
+                       incoming().keys().hasAll(['id', 'userId', 'couponId', 'couponName', 'amount', 'utr', 'status', 'createdAt']) &&
+                       isValidOrder(incoming());
+                       
+      allow update: if isSignedIn() && isValidId(orderId) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       isValidOrder(incoming()) &&
+                       (isAdmin() || (existing().userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['updatedAt'])));
+                       
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow get, list: if isSignedIn();
+      allow create, update: if isSignedIn() && isValidId(notificationId) && isValidNotification(incoming());
+      allow delete: if isAdmin();
+    }
+
+    match /admins/{adminId} {
+      allow read: if isSignedIn() && (request.auth.uid == adminId || isAdmin());
+      allow write: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "summary":  "Architecture and implementation blueprint for Coupon Lo Android application featuring a meme coupon storefront, native UPI payment QR code generation, proof submission, real-time Firebase Firestore order tracking, and an admin management dashboard.",
+  "updatedAt":  "2026-11-09T15:57:56.124767259Z",
+  "requestFeedback":  true,
+  "userFacing":  true
+}
